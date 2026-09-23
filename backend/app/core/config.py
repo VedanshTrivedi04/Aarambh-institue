@@ -7,7 +7,7 @@ No secrets are hard-coded here.
 """
 
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -69,18 +69,30 @@ class Settings(BaseSettings):
 
     # ------------------------------------------------------------------ #
     # CORS
-    # Accepts comma-separated origins: "http://localhost:3000,https://app.aarambh.in"
+    # Accepts comma-separated string OR JSON array string:
+    # "http://localhost:3000,https://app.aarambh.in" or '["http://localhost:3000"]'
     # Also allows regex matching for preview deployments on Vercel
     # ------------------------------------------------------------------ #
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: list[str] | str = ["http://localhost:3000", "http://127.0.0.1:3000"]
     CORS_ORIGIN_REGEX: str | None = r"https:\/\/.*\.vercel\.app"
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def parse_cors(cls, v: str | list[str]) -> list[str]:
+    def parse_cors(cls, v: Any) -> list[str]:
+        if isinstance(v, list):
+            return [str(origin).strip() for origin in v if str(origin).strip()]
         if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("[") and v.endswith("]"):
+                try:
+                    import json
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+                except Exception:
+                    pass
             return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+        return ["http://localhost:3000"]
 
     # ------------------------------------------------------------------ #
     # File storage

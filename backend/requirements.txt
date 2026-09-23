@@ -5,6 +5,7 @@
 # Web framework & ASGI server
 fastapi>=0.111.0,<1.0.0
 uvicorn[standard]>=0.29.0,<1.0.0
+gunicorn>=22.0.0,<23.0.0
 
 # Database — Async SQLAlchemy + asyncpg driver
 sqlalchemy[asyncio]>=2.0.30,<3.0.0

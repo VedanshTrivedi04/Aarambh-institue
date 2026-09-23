@@ -39,7 +39,7 @@ git push origin main
 Render will now:
 - Build the backend using `pip install -r requirements.txt`.
 - Automatically run any pending migrations on Neon via `alembic upgrade head`.
-- Start the server with `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2`.
+- Start the server with `gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:$PORT --timeout 120 app.main:app`.
 
 ---
 

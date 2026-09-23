@@ -11,6 +11,7 @@ dependencies = [
     # Web framework
     "fastapi>=0.111.0",
     "uvicorn[standard]>=0.29.0",
+    "gunicorn>=22.0.0",
 
     # Database — async SQLAlchemy + asyncpg driver
     "sqlalchemy[asyncio]>=2.0.30",
