@@ -39,7 +39,7 @@ git push origin main
 Render will now:
 - Provision the managed PostgreSQL database.
 - Build the backend using `pip install -r requirements.txt`.
-- Execute `preDeployCommand: alembic upgrade head` to run all 12 database migrations automatically.
+- Automatically run database migrations via `alembic upgrade head` before starting the server.
 - Start the server with `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2`.
 
 ---
