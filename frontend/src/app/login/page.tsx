@@ -278,7 +278,7 @@ export default function LoginPage() {
 
       {/* Footer Note */}
       <div className="text-center text-xs text-slate-500 py-3 font-medium">
-        © 2026 Aarambh Institute, Indore. All rights reserved. Secured by Argon2id & JWT Authentication.
+        © 2026 Aarambh Institute, Indore. Developed by Pragyan Innovations.
       </div>
     </div>
   );

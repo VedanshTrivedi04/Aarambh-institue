@@ -164,7 +164,8 @@ Open your browser at `http://localhost:3000`.
 | Role | Email | Password |
 | :--- | :--- | :--- |
 | **Admin** | `admin@aarambhinstitute.com` | `AarambhAdmin@2026` |
-| **Teacher** | `pankaj.dubey@aarambhinstitute.com` | `AarambhTeacher@2026` |
+| **Faculty / Teacher** | `pankaj.dubey@aarambhinstitute.com` | `AarambhTeacher@2026` |
+| **Student** | `student@aarambhinstitute.com` | `AarambhStudent@2026` |
 
 *(Note: Change passwords immediately in production via the security settings!)*
 

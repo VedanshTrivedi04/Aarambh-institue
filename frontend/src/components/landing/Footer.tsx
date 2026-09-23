@@ -252,8 +252,14 @@ export default function Footer({ contact }: FooterProps) {
 
         {/* Bottom copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div>
-            © {new Date().getFullYear()} Aarambh Institute®. All Rights Reserved. 8 Shantinath Puri, Hawa Bangla, Indore.
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1 sm:gap-2 text-center sm:text-left">
+            <span>
+              © {new Date().getFullYear()} Aarambh Institute®. All Rights Reserved. 8 Shantinath Puri, Hawa Bangla, Indore.
+            </span>
+            <span className="hidden sm:inline text-slate-600">•</span>
+            <span className="text-slate-400 font-medium">
+              Developed by <span className="text-slate-200 font-semibold hover:text-white transition-colors">Pragyan Innovations</span>
+            </span>
           </div>
 
           <div className="flex items-center gap-6">

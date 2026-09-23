@@ -1,0 +1,43 @@
+name: Sync Frontend to Vercel Repository
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/sync-vercel.yml'
+  workflow_dispatch:
+
+jobs:
+  sync-frontend:
+    name: Sync Frontend to Vercel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Split Frontend Directory & Push to Vercel Repository
+        env:
+          SYNC_TOKEN: ${{ secrets.VERCEL_REPO_SYNC_TOKEN }}
+        run: |
+          if [ -z "$SYNC_TOKEN" ]; then
+            echo "::error::VERCEL_REPO_SYNC_TOKEN secret is missing! Please add it in your repository Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          echo "Extracting frontend directory into standalone branch..."
+          git subtree split --prefix=frontend -b vercel-sync-branch
+
+          echo "Pushing frontend to https://github.com/VedanshTrivedi04/aarambhinstituevercel.git..."
+          git push --force "https://x-access-token:${SYNC_TOKEN}@github.com/VedanshTrivedi04/aarambhinstituevercel.git" vercel-sync-branch:main
+
+          echo "✅ Successfully synced frontend to aarambhinstituevercel repository!"

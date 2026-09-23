@@ -14,7 +14,7 @@ from app.db.session import AsyncSessionLocal
 from app.models.institute import Institute, Branch
 from app.models.academic_structure import AcademicYear, Board, SchoolClass, Course
 from app.models.user import User, UserStatus
-from app.models.people import TeacherProfile
+from app.models.people import TeacherProfile, StudentProfile
 from app.core.security import hash_password
 
 
@@ -276,6 +276,40 @@ async def seed():
             print(f"Created Admin: {admin_user.email}")
         else:
             print(f"Admin user exists: {admin_user.email}")
+
+        # 9. Student User
+        student_email = "student@aarambhinstitute.com"
+        student_stmt = select(User).where(User.email == student_email)
+        student_res = await session.execute(student_stmt)
+        student_user = student_res.scalar_one_or_none()
+        if not student_user:
+            student_pwd = hash_password("AarambhStudent@2026")
+            student_user = User(
+                id=uuid.uuid4(),
+                institute_id=institute.id,
+                email=student_email,
+                mobile="8839714081",
+                password_hash=student_pwd,
+                role="STUDENT",
+                status=UserStatus.ACTIVE,
+            )
+            session.add(student_user)
+            await session.flush()
+
+            sp = StudentProfile(
+                id=uuid.uuid4(),
+                institute_id=institute.id,
+                user_id=student_user.id,
+                first_name="Prince",
+                last_name="Yadav",
+                admission_number="ADM-2026-001",
+                is_active=True,
+            )
+            session.add(sp)
+            await session.flush()
+            print(f"Created Student: {student_user.email}")
+        else:
+            print(f"Student user exists: {student_user.email}")
 
         await session.commit()
         print("Successfully committed Aarambh Institute seed data to Neon PostgreSQL!")

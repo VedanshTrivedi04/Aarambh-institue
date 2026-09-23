@@ -55,8 +55,9 @@ Once the backend service status is **"Live"**:
    - Institute created: `Aarambh Institute`
    - Campus created: `Hawa Bangla Campus`
    - Academic boards, classes, courses created
-   - Teachers profiles created
-   - Admin account created: `admin@aarambhinstitute.com` (Default password: `AarambhAdmin@2026`)
+   - Teachers profiles created (Password: `AarambhTeacher@2026`)
+   - Admin account created: `admin@aarambhinstitute.com` (Password: `AarambhAdmin@2026`)
+   - Demo Student created: `student@aarambhinstitute.com` (Password: `AarambhStudent@2026`)
 
 ---
 
@@ -104,7 +105,28 @@ https://aarambh-institute.vercel.app
 
 ---
 
-## Part 3: Verify Cross-Origin Resource Sharing (CORS)
+## Part 3: Automated CI/CD Sync (Main Repo ➔ Vercel Repo)
+
+Every time you push to `main` on your main repository (`VedanshTrivedi04/Aarambh-institue`), GitHub Actions automatically extracts the `frontend/` directory and pushes it to `VedanshTrivedi04/aarambhinstituevercel`.
+
+### 🔑 One-Time Secret Setup
+1. Go to your GitHub profile: **Settings ➔ Developer settings ➔ Personal access tokens ➔ Tokens (classic)** (or [click here](https://github.com/settings/tokens)).
+2. Click **Generate new token (classic)**.
+3. Note: `Vercel Repo Sync`
+4. Select scope: **`repo`** (Full control of private repositories).
+5. Click **Generate token** and copy it.
+6. Now go to your **main repository** on GitHub (`VedanshTrivedi04/Aarambh-institue`):
+   - Click **Settings ➔ Secrets and variables ➔ Actions**.
+   - Click **New repository secret**.
+   - Name: `VERCEL_REPO_SYNC_TOKEN`
+   - Secret: Paste the token you copied.
+   - Click **Add secret**.
+
+Now, whenever you push any code to `main`, GitHub Actions will automatically sync `frontend/` to `aarambhinstituevercel`, triggering an instant Vercel build!
+
+---
+
+## Part 4: Verify Cross-Origin Resource Sharing (CORS)
 
 The backend is pre-configured with:
 - `CORS_ORIGIN_REGEX=https://.*\.vercel\.app`
@@ -119,7 +141,7 @@ The backend is pre-configured with:
 
 ---
 
-## Part 4: Production Checklist & Smoke Test
+## Part 5: Production Checklist & Smoke Test
 
 - [ ] **Liveness & Readiness**:
   - Visit `https://<YOUR_RENDER_BACKEND>.onrender.com/health` -> `{"status":"ok"}`
