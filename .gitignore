@@ -1,0 +1,103 @@
+# ==========================================
+# Root .gitignore for Aarambh Institute ERP
+# ==========================================
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*$*
+
+# Environment Variables & Secrets - NEVER COMMIT SECRETS
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.cert
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Coverage (Python)
+.cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Local Storage / Uploads / Databases
+uploads/
+backend/uploads/
+*.sqlite
+*.sqlite3
+*.db
+
+# Alembic compiled files
+alembic/versions/__pycache__/
+backend/alembic/versions/__pycache__/
+
+# Node & Next.js
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.next/
+out/
+.vercel/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

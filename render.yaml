@@ -1,0 +1,83 @@
+# =============================================================================
+# Aarambh Institute ERP — Render Blueprint (render.yaml)
+#
+# Documentation: https://render.com/docs/blueprint-spec
+# To deploy: Connect your repository in Render Dashboard -> "New" -> "Blueprint"
+# =============================================================================
+
+databases:
+  # ---------------------------------------------------------------------------
+  # Managed PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  - name: aarambh-erp-db
+    databaseName: aarambh_erp_prod
+    user: aarambh_admin
+    plan: free                # Upgrade to starter ($7/mo) for persistent production use
+    region: oregon            # Options: oregon, frankfurt, singapore, ohio
+
+services:
+  # ---------------------------------------------------------------------------
+  # FastAPI ASGI Backend Web Service
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: aarambh-erp-backend
+    env: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    preDeployCommand: alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # --- Application Core ---
+      - key: APP_ENV
+        value: prod
+      - key: DEBUG
+        value: "false"
+      - key: APP_NAME
+        value: "Aarambh Institute ERP"
+      - key: APP_VERSION
+        value: "0.1.0"
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+      # --- Security & JWT (Render auto-generates a secure 256-bit random key) ---
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+
+      # --- Database Connection (Linked to the managed DB above) ---
+      # Automatically converted to postgresql+asyncpg:// by app/core/config.py
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aarambh-erp-db
+          property: connectionString
+
+      # --- CORS: Allows Vercel frontend and local development ---
+      - key: CORS_ORIGINS
+        value: "http://localhost:3000,https://aarambh-institute.vercel.app"
+      - key: CORS_ORIGIN_REGEX
+        value: "https://.*\\.vercel\\.app"
+
+      # --- File Storage & Rate Limiting ---
+      - key: STORAGE_BACKEND
+        value: local
+      - key: LOCAL_STORAGE_PATH
+        value: ./uploads
+      - key: RATE_LIMIT_AUTH_RPM
+        value: "20"
+
+      # --- Razorpay (Optional: set in Render Dashboard > Environment) ---
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false

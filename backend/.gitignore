@@ -1,0 +1,48 @@
+# Aarambh ERP Backend — Git Ignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment — NEVER commit real secrets
+.env
+.env.*
+!.env.example
+
+# Local uploads (dev storage backend)
+uploads/
+
+# Test artifacts
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic
+# Keep the versions/ folder but not compiled pyc inside it
+alembic/versions/__pycache__/
