@@ -175,14 +175,14 @@ Open your browser at `http://localhost:3000`.
 ### Deploying to Render & Vercel
 
 The repository includes ready-to-use production configuration files:
-- **`render.yaml`**: One-click Render Blueprint that provisions both PostgreSQL and FastAPI with automatic Alembic migrations.
+- **`render.yaml`**: One-click Render Blueprint that deploys the FastAPI backend and connects directly to your existing Neon PostgreSQL database.
 - **`frontend/vercel.json`**: Pre-configured Vercel configuration with security headers and Next.js presets.
 
 #### 1. Backend on Render (1-Click Blueprint)
 1. Push this repository to GitHub.
 2. Go to [Render Dashboard](https://dashboard.render.com) ➔ **New +** ➔ **Blueprint**.
 3. Connect your repository. Render will automatically detect [`render.yaml`](./render.yaml).
-4. Click **Apply**.
+4. Click **Apply**. Render will deploy the backend and connect to your Neon database.
 5. Once live, open the **Shell** tab on `aarambh-erp-backend` and seed data:
    ```bash
    python -m app.db.seed_aarambh

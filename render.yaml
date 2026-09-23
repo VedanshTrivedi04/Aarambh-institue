@@ -1,19 +1,9 @@
 # =============================================================================
 # Aarambh Institute ERP — Render Blueprint (render.yaml)
 #
+# Backend Service Only (Database is hosted on Neon PostgreSQL)
 # Documentation: https://render.com/docs/blueprint-spec
-# To deploy: Connect your repository in Render Dashboard -> "New" -> "Blueprint"
 # =============================================================================
-
-databases:
-  # ---------------------------------------------------------------------------
-  # Managed PostgreSQL Database
-  # ---------------------------------------------------------------------------
-  - name: aarambh-erp-db
-    databaseName: aarambh_erp_prod
-    user: aarambh_admin
-    plan: free                # Upgrade to starter ($7/mo) for persistent production use
-    region: oregon            # Options: oregon, frankfurt, singapore, ohio
 
 services:
   # ---------------------------------------------------------------------------
@@ -22,7 +12,7 @@ services:
   - type: web
     name: aarambh-erp-backend
     env: python
-    region: oregon
+    region: oregon            # Options: oregon, frankfurt, singapore, ohio
     plan: free
     rootDir: backend
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
@@ -42,9 +32,9 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
 
-      # --- Security & JWT (Render auto-generates a secure 256-bit random key) ---
+      # --- Security & JWT ---
       - key: SECRET_KEY
-        generateValue: true
+        value: 9f8c4e5b6a7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
@@ -52,16 +42,13 @@ services:
       - key: REFRESH_TOKEN_EXPIRE_DAYS
         value: "7"
 
-      # --- Database Connection (Linked to the managed DB above) ---
-      # Automatically converted to postgresql+asyncpg:// by app/core/config.py
+      # --- Neon PostgreSQL Database URL ---
       - key: DATABASE_URL
-        fromDatabase:
-          name: aarambh-erp-db
-          property: connectionString
+        value: postgresql+asyncpg://neondb_owner:npg_AMiL8sNJE7tZ@ep-damp-fog-akngnd30.c-3.us-west-2.aws.neon.tech/neondb?ssl=require
 
       # --- CORS: Allows Vercel frontend and local development ---
       - key: CORS_ORIGINS
-        value: "http://localhost:3000,https://aarambh-institute.vercel.app"
+        value: "http://localhost:3000,http://127.0.0.1:3000,https://aarambh-institute.vercel.app"
       - key: CORS_ORIGIN_REGEX
         value: "https://.*\\.vercel\\.app"
 
@@ -71,9 +58,9 @@ services:
       - key: LOCAL_STORAGE_PATH
         value: ./uploads
       - key: RATE_LIMIT_AUTH_RPM
-        value: "20"
+        value: "60"
 
-      # --- Razorpay (Optional: set in Render Dashboard > Environment) ---
+      # --- Razorpay (Optional: set in Render Dashboard if used) ---
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET

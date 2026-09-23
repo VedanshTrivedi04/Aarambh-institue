@@ -10,19 +10,19 @@ This guide walks you through deploying **Aarambh Institute ERP** to production w
 
 | Component | Platform | Configuration File |
 | :--- | :--- | :--- |
-| **Database** | Render Managed PostgreSQL | Declared in `render.yaml` (`aarambh-erp-db`) |
+| **Database** | Neon Cloud PostgreSQL (Existing) | Configured in `DATABASE_URL` |
 | **FastAPI Backend** | Render Web Service | Declared in `render.yaml` (`aarambh-erp-backend`) |
 | **Next.js Frontend** | Vercel | `frontend/vercel.json` |
 
 ---
 
-## Part 1: Deploy Backend & Database on Render (Blueprint)
+## Part 1: Deploy Backend on Render (Blueprint)
 
 ### Step 1: Push Changes to GitHub
 Make sure all your code is committed and pushed to your GitHub repository:
 ```bash
 git add .
-git commit -m "feat: add Render blueprint and Vercel production deployment configuration"
+git commit -m "feat: configure Render blueprint for backend and existing Neon database"
 git push origin main
 ```
 
@@ -31,15 +31,14 @@ git push origin main
 2. Click the **"New +"** button in the top navigation bar.
 3. Select **"Blueprint"**.
 4. Connect your GitHub repository (`Aarambh Institute`).
-5. Render will automatically parse [render.yaml](file:///d:/Aarambh%20Intitute/render.yaml) and display the execution plan:
-   - **Service 1**: `aarambh-erp-db` (PostgreSQL Database)
-   - **Service 2**: `aarambh-erp-backend` (FastAPI Web Service)
+5. Render will automatically parse [render.yaml](file:///d:/Aarambh%20Intitute/render.yaml) and display:
+   - **Service**: `aarambh-erp-backend` (FastAPI Web Service)
+   *(Note: Database is connected to your existing Neon PostgreSQL database).*
 6. Click **"Apply"**.
 
 Render will now:
-- Provision the managed PostgreSQL database.
 - Build the backend using `pip install -r requirements.txt`.
-- Automatically run database migrations via `alembic upgrade head` before starting the server.
+- Automatically run any pending migrations on Neon via `alembic upgrade head`.
 - Start the server with `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 2`.
 
 ---
