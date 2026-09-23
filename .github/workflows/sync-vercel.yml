@@ -37,7 +37,10 @@ jobs:
           echo "Extracting frontend directory into standalone branch..."
           git subtree split --prefix=frontend -b vercel-sync-branch
 
+          echo "Configuring remote target..."
+          git remote add target "https://${SYNC_TOKEN}@github.com/VedanshTrivedi04/aarambhinstituevercel.git"
+
           echo "Pushing frontend to https://github.com/VedanshTrivedi04/aarambhinstituevercel.git..."
-          git push --force "https://x-access-token:${SYNC_TOKEN}@github.com/VedanshTrivedi04/aarambhinstituevercel.git" vercel-sync-branch:main
+          git push --force target vercel-sync-branch:main
 
           echo "✅ Successfully synced frontend to aarambhinstituevercel repository!"
