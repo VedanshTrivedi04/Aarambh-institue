@@ -35,8 +35,10 @@ services:
         value: "2"
 
       # --- Security & JWT ---
+      # Secrets live in the Render dashboard only — this file is in a public repo.
+      # Generate with: openssl rand -hex 32
       - key: SECRET_KEY
-        value: 9f8c4e5b6a7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f
+        sync: false
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
@@ -45,14 +47,20 @@ services:
         value: "7"
 
       # --- Neon PostgreSQL Database URL ---
+      # Set in the Render dashboard (Neon connection string) — never commit it.
       - key: DATABASE_URL
-        value: postgresql+asyncpg://neondb_owner:npg_AMiL8sNJE7tZ@ep-damp-fog-akngnd30.c-3.us-west-2.aws.neon.tech/neondb?ssl=require
+        sync: false
 
-      # --- CORS: Allows Vercel frontend and local development ---
+      # --- CORS: browsers reach the API through the frontend's same-origin /api/v1
+      # proxy, so only list origins that must call the backend directly. No wildcard
+      # (*.vercel.app) — with credentials enabled it would trust any site on Vercel.
       - key: CORS_ORIGINS
         value: '["http://localhost:3000","http://127.0.0.1:3000","https://aarambh-institute.vercel.app"]'
-      - key: CORS_ORIGIN_REGEX
-        value: "https://.*\\.vercel\\.app"
+
+      # --- Reverse proxy: Render's load balancer appends the client IP to
+      # X-Forwarded-For. Needed so login rate limiting keys on the real client IP.
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
 
       # --- File Storage & Rate Limiting ---
       - key: STORAGE_BACKEND

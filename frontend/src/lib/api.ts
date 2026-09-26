@@ -1,6 +1,5 @@
 import { LandingPageBundle, PublicEnquiryPayload, PublicEnquiryResponse } from "@/types/landing";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { apiBase } from "@/lib/apiBase";
 
 export const FALLBACK_LANDING_DATA: LandingPageBundle = {
   contact: {
@@ -386,7 +385,7 @@ export const FALLBACK_LANDING_DATA: LandingPageBundle = {
  */
 export async function getLandingData(): Promise<LandingPageBundle> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/public/landing-data`, {
+    const res = await fetch(`${apiBase()}/api/v1/public/landing-data`, {
       next: { revalidate: 30 },
     });
 
@@ -410,7 +409,7 @@ export async function submitPublicEnquiry(
   payload: PublicEnquiryPayload
 ): Promise<{ success: boolean; data?: PublicEnquiryResponse; error?: string }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/public/enquiries`, {
+    const res = await fetch(`${apiBase()}/api/v1/public/enquiries`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -435,7 +434,8 @@ export async function submitPublicEnquiry(
 }
 
 /**
- * Admin CMS: Fetch all customizable public page configurations
+ * Admin CMS: Fetch all customizable public page configurations.
+ * Requires an authenticated admin session (the endpoint is role-guarded).
  */
 export async function fetchAdminCmsContent(): Promise<{
   success: boolean;
@@ -443,57 +443,38 @@ export async function fetchAdminCmsContent(): Promise<{
   last_updated?: string;
   error?: string;
 }> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/admin/cms/content`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      return { success: false, error: err.detail || "Failed to load CMS content" };
-    }
-
-    const data = await res.json();
-    return { success: true, pages: data.pages, last_updated: data.last_updated };
-  } catch (err: any) {
-    return { success: false, error: err?.message || "Network error fetching CMS content" };
+  const { authFetch } = await import("@/lib/auth");
+  const res = await authFetch<{ pages: Record<string, any>; last_updated: string }>(
+    "/api/v1/admin/cms/content",
+    { cache: "no-store" }
+  );
+  if (res.error || !res.data) {
+    return { success: false, error: res.error || "Failed to load CMS content" };
   }
+  return { success: true, pages: res.data.pages, last_updated: res.data.last_updated };
 }
 
 /**
- * Admin CMS: Update a specific public page's configuration
+ * Admin CMS: Update a specific public page's configuration.
+ * The author is recorded server-side from the session, not sent by the client.
  */
 export async function updateAdminCmsSection(
   pageSlug: string,
   data: any,
   title?: string
 ): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    const { getAuthToken } = await import("@/lib/auth");
-    const token = getAuthToken();
-    const res = await fetch(`${API_BASE_URL}/api/v1/admin/cms/content/${pageSlug}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        title: title || pageSlug.replace("_", " ").toUpperCase(),
-        data,
-        updated_by: "ADMIN_EDITOR",
-      }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      return { success: false, error: err.detail || `Failed to update ${pageSlug}` };
-    }
-
-    const resJson = await res.json();
-    return { success: true, data: resJson };
-  } catch (err: any) {
-    return { success: false, error: err?.message || `Network error updating ${pageSlug}` };
+  const { authFetch } = await import("@/lib/auth");
+  const res = await authFetch(`/api/v1/admin/cms/content/${encodeURIComponent(pageSlug)}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      title: title || pageSlug.replace("_", " ").toUpperCase(),
+      data,
+    }),
+  });
+  if (res.error) {
+    return { success: false, error: res.error || `Failed to update ${pageSlug}` };
   }
+  return { success: true, data: res.data };
 }
 
 /**
@@ -502,26 +483,13 @@ export async function updateAdminCmsSection(
 export async function resetAdminCmsDefaults(
   pageSlug?: string
 ): Promise<{ success: boolean; message?: string; error?: string }> {
-  try {
-    const { getAuthToken } = await import("@/lib/auth");
-    const token = getAuthToken();
-    const res = await fetch(`${API_BASE_URL}/api/v1/admin/cms/content/reset`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ page_slug: pageSlug || null }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      return { success: false, error: err.detail || "Failed to reset content" };
-    }
-
-    const resJson = await res.json();
-    return { success: true, message: resJson.message };
-  } catch (err: any) {
-    return { success: false, error: err?.message || "Network error resetting content" };
+  const { authFetch } = await import("@/lib/auth");
+  const res = await authFetch<{ message?: string }>("/api/v1/admin/cms/content/reset", {
+    method: "POST",
+    body: JSON.stringify({ page_slug: pageSlug || null }),
+  });
+  if (res.error) {
+    return { success: false, error: res.error || "Failed to reset content" };
   }
+  return { success: true, message: res.data?.message };
 }

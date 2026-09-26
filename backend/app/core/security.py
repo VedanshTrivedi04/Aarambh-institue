@@ -51,6 +51,15 @@ def verify_password(plain: str, hashed: str) -> tuple[bool, str | None]:
     return valid, updated
 
 
+# Verified against when the account doesn't exist, so "unknown user" costs the same
+# Argon2 time as "wrong password" and response latency can't be used to enumerate accounts.
+_DUMMY_HASH = _pwd_hash.hash("aarambh-timing-equalisation-placeholder")
+
+
+def burn_password_check(plain: str) -> None:
+    _pwd_hash.verify(plain, _DUMMY_HASH)
+
+
 # ---------------------------------------------------------------------------
 # JWT
 # ---------------------------------------------------------------------------

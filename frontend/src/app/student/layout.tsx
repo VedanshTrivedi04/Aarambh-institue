@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearAuthSession } from "@/lib/auth";
+import { logoutUser } from "@/lib/auth";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import {
   LayoutDashboard,
@@ -29,8 +29,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const { user, checking } = useAuthGuard(ALLOWED_ROLES);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = () => {
-    clearAuthSession();
+  const handleLogout = async () => {
+    await logoutUser();
     router.push("/login");
   };
 
@@ -158,12 +158,12 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
             <div className="flex items-center gap-2.5 overflow-hidden">
               <div className="w-8 h-8 rounded-xl bg-red-50 text-[#c22329] border border-red-200 flex items-center justify-center font-bold text-xs shrink-0">
-                {(user.first_name?.[0] || user.email[0]).toUpperCase()}
+                {(user.first_name?.[0] || user.email?.[0] || user.mobile?.[0] || "U").toUpperCase()}
                 {(user.last_name?.[0] || "").toUpperCase()}
               </div>
               <div className="truncate">
                 <span className="block text-xs font-bold text-slate-900 truncate">
-                  {user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user.email}
+                  {user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : user.email || user.mobile}
                 </span>
                 <span className="block text-[10px] text-slate-500 font-medium truncate">
                   {user.role === "PARENT" ? "Parent Account" : "Student Account"}

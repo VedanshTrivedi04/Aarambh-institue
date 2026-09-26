@@ -73,8 +73,11 @@ class Settings(BaseSettings):
     # "http://localhost:3000,https://app.aarambh.in" or '["http://localhost:3000"]'
     # Also allows regex matching for preview deployments on Vercel
     # ------------------------------------------------------------------ #
+    # No wildcard default: with allow_credentials=True a regex like *.vercel.app would
+    # trust every site anyone can deploy to Vercel. Browser traffic to the API goes
+    # through the frontend's same-origin /api/v1 proxy, so CORS is only a fallback.
     CORS_ORIGINS: list[str] | str = ["http://localhost:3000", "http://127.0.0.1:3000"]
-    CORS_ORIGIN_REGEX: str | None = r"https:\/\/.*\.vercel\.app"
+    CORS_ORIGIN_REGEX: str | None = None
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
@@ -115,6 +118,12 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------ #
     RATE_LIMIT_AUTH_RPM: int = 10  # requests per minute per IP
 
+    # Number of reverse proxies in front of the app that append to X-Forwarded-For
+    # (Render's load balancer = 1). 0 = ignore the header and use the socket peer.
+    # X-Forwarded-For is client-controlled, so it is only trusted this many hops
+    # from the right; never take the leftmost entry.
+    TRUSTED_PROXY_COUNT: int = 0
+
     # ------------------------------------------------------------------ #
     # Razorpay (online fee payments)
     # ------------------------------------------------------------------ #
@@ -132,6 +141,8 @@ class Settings(BaseSettings):
                 raise ValueError("DEBUG must be False in production")
             if len(self.SECRET_KEY) < 32:
                 raise ValueError("SECRET_KEY must be at least 32 characters in production")
+            if "CHANGE_ME" in self.SECRET_KEY.upper():
+                raise ValueError("SECRET_KEY is still the .env.example placeholder")
         return self
 
 

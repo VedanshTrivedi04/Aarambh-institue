@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loginUser } from "@/lib/auth";
+import { loginUser, logoutUser, portalForRole } from "@/lib/auth";
 import {
   Lock,
   Mail,
@@ -22,7 +22,6 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const isDev = process.env.NODE_ENV !== "production";
   const [roleTab, setRoleTab] = useState<"admin" | "teacher" | "student">("admin");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -44,14 +43,12 @@ export default function LoginPage() {
     setLoading(false);
 
     if (res.success) {
-      if (res.user?.role === "ADMIN" || res.user?.role === "SUPER_ADMIN" || res.user?.role === "MANAGEMENT") {
-        router.push("/admin");
-      } else if (res.user?.role === "TEACHER") {
-        router.push("/teacher");
-      } else if (res.user?.role === "STUDENT" || res.user?.role === "PARENT") {
-        router.push("/student");
+      const portal = portalForRole(res.user?.role);
+      if (portal) {
+        router.push(portal);
       } else {
-        router.push("/student");
+        await logoutUser();
+        setError("This account doesn't have access to any portal. Please contact the institute.");
       }
     } else {
       setError(res.error || "Login failed. Please check your credentials.");
@@ -224,55 +221,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick 1-Click Fill Demo Credentials — dev/staging only, stripped from production builds */}
-          {isDev && (
-            <div className="mt-6 pt-5 border-t border-slate-200 space-y-2 relative z-10">
-              <span className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center">
-                1-Click Demo Credentials (Dev Only)
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRoleTab("admin");
-                    setIdentifier("admin@aarambhinstitute.com");
-                    setPassword("AarambhAdmin@2026");
-                  }}
-                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-red-200 hover:bg-red-50/40 text-left text-slate-700 hover:text-slate-900 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
-                >
-                  <div className="w-2 h-2 rounded-full bg-[#c22329] shrink-0" />
-                  <span className="truncate font-semibold text-[11px]">Admin Portal</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRoleTab("teacher");
-                    setIdentifier("pankaj.dubey@aarambhinstitute.com");
-                    setPassword("AarambhTeacher@2026");
-                  }}
-                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-200 hover:bg-blue-50/40 text-left text-slate-700 hover:text-slate-900 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
-                >
-                  <div className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                  <span className="truncate font-semibold text-[11px]">Faculty (Dubey)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRoleTab("student");
-                    setIdentifier("student@aarambhinstitute.com");
-                    setPassword("AarambhStudent@2026");
-                  }}
-                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-amber-200 hover:bg-amber-50/40 text-left text-slate-700 hover:text-slate-900 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
-                >
-                  <div className="w-2 h-2 rounded-full bg-[#c99a5e] shrink-0" />
-                  <span className="truncate font-semibold text-[11px]">Student (Demo)</span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

@@ -14,6 +14,7 @@ from typing import Any, Callable, Literal
 
 from fastapi import Depends, Request, Response
 
+from app.core.client_ip import get_client_ip
 from app.core.exceptions import RateLimitExceededError
 from app.core.logging import get_logger
 
@@ -110,9 +111,7 @@ def rate_limit(
     """
     async def dependency(request: Request, response: Response) -> None:
         # 1. Determine key based on tier
-        client_ip = request.client.host if request.client else "unknown"
-        if "x-forwarded-for" in request.headers:
-            client_ip = request.headers["x-forwarded-for"].split(",")[0].strip()
+        client_ip = get_client_ip(request)
 
         identifier: str = client_ip
         if tier == "user":

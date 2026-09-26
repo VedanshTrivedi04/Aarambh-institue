@@ -45,6 +45,7 @@ async def _ensure_cms_table(db: AsyncSession) -> None:
 @router.get(
     "/content",
     response_model=AllSiteContentResponse,
+    dependencies=[require_role(*_ADMIN_ROLES)],
     summary="Get all public page configurations for CMS editor",
 )
 async def get_all_cms_content(db: AsyncSession = Depends(get_db)) -> AllSiteContentResponse:
@@ -94,6 +95,7 @@ async def get_all_cms_content(db: AsyncSession = Depends(get_db)) -> AllSiteCont
 @router.get(
     "/content/{page_slug}",
     response_model=PageContentResponse,
+    dependencies=[require_role(*_ADMIN_ROLES)],
     summary="Get single page configuration",
 )
 async def get_page_cms_content(
@@ -153,7 +155,7 @@ async def update_page_cms_content(
             title=payload.title or page_slug.replace("_", " ").title(),
             description=payload.description,
             data=payload.data,
-            updated_by=payload.updated_by or current_user.email,
+            updated_by=current_user.email,
         )
         db.add(record)
     else:
@@ -162,11 +164,13 @@ async def update_page_cms_content(
         if payload.description is not None:
             record.description = payload.description
         record.data = payload.data
-        record.updated_by = payload.updated_by or current_user.email
+        # Always the authenticated identity — a client-supplied updated_by would let
+        # an editor forge who made a change.
+        record.updated_by = current_user.email
 
     await db.commit()
     await db.refresh(record)
-    logger.info("Admin updated CMS content for page: %s", page_slug)
+    logger.info("Admin updated CMS content", page=page_slug, user_id=str(current_user.id))
     return PageContentResponse.model_validate(record)
 
 

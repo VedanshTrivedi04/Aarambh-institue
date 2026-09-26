@@ -108,9 +108,13 @@ async def refresh(
 ) -> TokenResponse:
     token = cookie_token
     if not token:
-        # Try extracting from JSON body (native mobile fallback)
-        body = await request.json() if request.headers.get("content-type") == "application/json" else {}
-        token = body.get("refresh_token")
+        # Try extracting from JSON body (native mobile fallback). Malformed or
+        # non-object bodies must yield a 401, not a 500.
+        try:
+            body = await request.json() if "application/json" in request.headers.get("content-type", "") else {}
+        except ValueError:
+            body = {}
+        token = body.get("refresh_token") if isinstance(body, dict) else None
 
     if not token:
         raise UnauthorizedError("No refresh token provided")

@@ -35,6 +35,10 @@ git push origin main
    - **Service**: `aarambh-erp-backend` (FastAPI Web Service)
    *(Note: Database is connected to your existing Neon PostgreSQL database).*
 6. Click **"Apply"**.
+7. Open the service's **Environment** tab and set the secrets that are intentionally *not* in `render.yaml`
+   (the repo is public):
+   - `SECRET_KEY` — generate with `openssl rand -hex 32`
+   - `DATABASE_URL` — your Neon connection string (`postgresql+asyncpg://...?ssl=require`)
 
 Render will now:
 - Build the backend using `pip install -r requirements.txt`.
@@ -47,17 +51,20 @@ Render will now:
 Once the backend service status is **"Live"**:
 1. In Render Dashboard, click on **`aarambh-erp-backend`**.
 2. Click on the **"Shell"** tab on the left menu.
-3. Run the idempotent database seed script:
+3. Run the idempotent database seed script. Passwords come from `SEED_ADMIN_PASSWORD`,
+   `SEED_TEACHER_PASSWORD` and `SEED_STUDENT_PASSWORD` if set; otherwise random ones are generated
+   and printed **once** — copy them now.
    ```bash
-   python -m app.db.seed_aarambh
+   SEED_ADMIN_PASSWORD='<strong password>' python -m app.db.seed_aarambh
    ```
 4. You should see output confirming:
    - Institute created: `Aarambh Institute`
    - Campus created: `Hawa Bangla Campus`
    - Academic boards, classes, courses created
-   - Teachers profiles created (Password: `AarambhTeacher@2026`)
-   - Admin account created: `admin@aarambhinstitute.com` (Password: `AarambhAdmin@2026`)
-   - Demo Student created: `student@aarambhinstitute.com` (Password: `AarambhStudent@2026`)
+   - Teacher profiles, the admin account and a demo student created (delete the demo student before go-live)
+
+> **Upgrading a database seeded by an older version?** Its accounts still use passwords that were
+> published in this repository. Run `python -m app.db.rotate_seed_passwords` in the same Shell tab.
 
 ---
 
@@ -94,7 +101,8 @@ Under **Environment Variables**, add:
 
 | Key | Value | Description |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_API_URL` | `https://aarambh-erp-backend.onrender.com` | Your Render backend URL (no trailing slash) |
+| `BACKEND_URL` | `https://aarambh-erp-backend.onrender.com` | Your Render backend URL (no trailing slash). The frontend proxies `/api/v1/*` to it, so the browser only ever talks to the Vercel domain and the refresh-token cookie stays first-party |
+| `NEXT_PUBLIC_API_URL` | same as `BACKEND_URL` | Optional fallback used if `BACKEND_URL` is unset |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | `rzp_test_...` *(optional)* | Your Razorpay Key ID for student fee collection |
 
 ### Step 4: Click Deploy
@@ -128,10 +136,10 @@ Now, whenever you push any code to `main`, GitHub Actions will automatically syn
 
 ## Part 4: Verify Cross-Origin Resource Sharing (CORS)
 
-The backend is pre-configured with:
-- `CORS_ORIGIN_REGEX=https://.*\.vercel\.app`
-  *(All Vercel preview and production deployments are automatically allowed!)*
-- If you use a custom domain (e.g. `https://aarambhinstitute.com`):
+Browsers call the API through the frontend's same-origin `/api/v1` proxy, so CORS is only a fallback.
+There is deliberately **no** `*.vercel.app` wildcard: with credentials enabled it would trust every site
+anyone can deploy on Vercel.
+- If a client must call the backend directly (e.g. a custom domain):
   1. Open Render Dashboard -> `aarambh-erp-backend` -> **Environment**.
   2. Edit `CORS_ORIGINS` to include your custom domain:
      ```text
@@ -152,8 +160,8 @@ The backend is pre-configured with:
   - Verify that the submission returns success (stored in PostgreSQL).
 - [ ] **Admin Portal Login**:
   - Go to `/login`.
-  - Log in with `admin@aarambhinstitute.com` / `AarambhAdmin@2026`.
-  - Verify redirection to `/admin/dashboard`.
-  - **Important**: Change the default admin password in production!
+  - Log in with the admin password printed by the seed script (or `SEED_ADMIN_PASSWORD`).
+  - Verify redirection to `/admin`.
+  - Reload the page: you should stay signed in (the session is restored from the httpOnly refresh cookie).
 - [ ] **Razorpay Payment Gateway (Optional)**:
   - If accepting online fee payments, add `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in Render Environment variables, and `NEXT_PUBLIC_RAZORPAY_KEY_ID` in Vercel.

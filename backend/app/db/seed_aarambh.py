@@ -7,6 +7,8 @@ Idempotent: safe to run multiple times.
 """
 
 import asyncio
+import os
+import secrets
 import uuid
 from datetime import date
 from sqlalchemy import select, text
@@ -16,6 +18,22 @@ from app.models.academic_structure import AcademicYear, Board, SchoolClass, Cour
 from app.models.user import User, UserStatus
 from app.models.people import TeacherProfile, StudentProfile
 from app.core.security import hash_password
+
+
+def _seed_password(env_name: str, label: str) -> str:
+    """
+    Password for a seeded account: taken from the environment, otherwise random.
+
+    Seed passwords must never be hard-coded — this repo is public, and any default
+    baked in here is a working login on every deployment that ran the seed.
+    A generated password is printed once so the operator can store it.
+    """
+    value = os.environ.get(env_name)
+    if value:
+        return value
+    generated = secrets.token_urlsafe(16)
+    print(f"[seed] {label} password (generated, shown once): {generated}")
+    return generated
 
 
 async def seed():
@@ -211,7 +229,7 @@ async def seed():
             ("Darshna", "Panchal", "Business Studies & Economics", 2, "MBA, Institutional Management", "EMP_DP"),
         ]
 
-        default_pwd = hash_password("AarambhTeacher@2026")
+        default_pwd = hash_password(_seed_password("SEED_TEACHER_PASSWORD", "Teachers"))
         for fn, ln, subj, exp, qual, emp_code in teachers_data:
             tp_stmt = select(TeacherProfile).where(
                 TeacherProfile.institute_id == institute.id,
@@ -261,7 +279,7 @@ async def seed():
         admin_res = await session.execute(admin_stmt)
         admin_user = admin_res.scalar_one_or_none()
         if not admin_user:
-            admin_pwd = hash_password("AarambhAdmin@2026")
+            admin_pwd = hash_password(_seed_password("SEED_ADMIN_PASSWORD", "Admin"))
             admin_user = User(
                 id=uuid.uuid4(),
                 institute_id=institute.id,
@@ -283,7 +301,7 @@ async def seed():
         student_res = await session.execute(student_stmt)
         student_user = student_res.scalar_one_or_none()
         if not student_user:
-            student_pwd = hash_password("AarambhStudent@2026")
+            student_pwd = hash_password(_seed_password("SEED_STUDENT_PASSWORD", "Demo student"))
             student_user = User(
                 id=uuid.uuid4(),
                 institute_id=institute.id,

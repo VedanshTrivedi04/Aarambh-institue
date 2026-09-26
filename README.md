@@ -159,15 +159,19 @@ Open your browser at `http://localhost:3000`.
 
 ---
 
-## 🔑 Default Credentials (Development & Testing)
+## 🔑 Seeded Accounts
 
-| Role | Email | Password |
+There are no default passwords. `python -m app.db.seed_aarambh` creates these accounts and
+takes each password from the environment, or generates a random one and prints it **once**:
+
+| Role | Email | Password source |
 | :--- | :--- | :--- |
-| **Admin** | `admin@aarambhinstitute.com` | `AarambhAdmin@2026` |
-| **Faculty / Teacher** | `pankaj.dubey@aarambhinstitute.com` | `AarambhTeacher@2026` |
-| **Student** | `student@aarambhinstitute.com` | `AarambhStudent@2026` |
+| **Admin** | `admin@aarambhinstitute.com` | `SEED_ADMIN_PASSWORD` |
+| **Faculty / Teacher** | `<first>.<last>@aarambhinstitute.com` | `SEED_TEACHER_PASSWORD` |
+| **Student (demo)** | `student@aarambhinstitute.com` | `SEED_STUDENT_PASSWORD` |
 
-*(Note: Change passwords immediately in production via the security settings!)*
+Delete the demo student before going live. If an older seed was run against a deployed
+database, run `python -m app.db.rotate_seed_passwords` to replace the old passwords.
 
 ---
 

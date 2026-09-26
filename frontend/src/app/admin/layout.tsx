@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearAuthSession } from "@/lib/auth";
+import { logoutUser } from "@/lib/auth";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 const ALLOWED_ROLES = ["SUPER_ADMIN", "ADMIN", "MANAGEMENT", "ACCOUNTANT", "COUNSELLOR"];
@@ -34,8 +34,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, checking } = useAuthGuard(ALLOWED_ROLES);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogout = () => {
-    clearAuthSession();
+  const handleLogout = async () => {
+    await logoutUser();
     router.push("/login");
   };
 
@@ -161,7 +161,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="truncate">
                 <span className="block text-xs font-bold text-slate-900 truncate">
-                  {user.email.split("@")[0]}
+                  {(user.email || user.mobile || "user").split("@")[0]}
                 </span>
                 <span className="block text-[10px] text-emerald-700 font-bold uppercase">
                   {user.role}

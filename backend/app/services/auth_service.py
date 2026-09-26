@@ -38,7 +38,9 @@ from app.core.exceptions import (
     UnauthorizedError,
 )
 from app.core.logging import get_logger
+from app.core.client_ip import get_client_ip
 from app.core.security import (
+    burn_password_check,
     create_access_token,
     create_refresh_token,
     decode_token,
@@ -77,27 +79,33 @@ async def authenticate_user(
     user: User | None = result.scalar_one_or_none()
 
     if user is None:
-        # Constant-time path to prevent user enumeration
+        # Spend the same hashing time as a real check so timing doesn't reveal
+        # whether the account exists.
+        burn_password_check(plain_password)
         logger.warning("Login attempt: user not found", identifier_truncated=identifier[:4] + "***")
         raise InvalidCredentialsError("Invalid credentials")
 
-    # Check account lock
-    if user.locked_until and datetime.now(UTC) < user.locked_until:
+    now = datetime.now(UTC)
+    if user.locked_until and now < user.locked_until:
         raise AccountInactiveError(
-            f"Account locked until {user.locked_until.isoformat()}. "
-            "Too many failed login attempts.",
+            "Account temporarily locked due to too many failed login attempts. "
+            "Try again later.",
             code="ACCOUNT_LOCKED",
         )
+    if user.locked_until and now >= user.locked_until:
+        # Lock has expired: start a fresh window instead of re-locking on the next typo.
+        user.failed_login_attempts = 0
+        user.locked_until = None
 
-    # Check account status
-    if user.status not in (UserStatus.ACTIVE, UserStatus.PENDING):
-        raise AccountInactiveError(f"Account is {user.status.value.lower()}")
-
-    # Verify password
+    # Verify the password BEFORE revealing anything about the account's status,
+    # otherwise "Account is suspended" confirms an account exists to anyone.
     valid, updated_hash = verify_password(plain_password, user.password_hash)
     if not valid:
         await _record_failed_attempt(db, user)
         raise InvalidCredentialsError("Invalid credentials")
+
+    if user.status not in (UserStatus.ACTIVE, UserStatus.PENDING):
+        raise AccountInactiveError(f"Account is {user.status.value.lower()}")
 
     # Transparent rehash — update hash if Argon2 parameters changed
     if updated_hash:
@@ -137,10 +145,7 @@ async def issue_tokens(
     ip: str | None = None
     ua: str | None = None
     if request:
-        forwarded = request.headers.get("X-Forwarded-For")
-        ip = forwarded.split(",")[0].strip() if forwarded else (
-            request.client.host if request.client else None
-        )
+        ip = get_client_ip(request)
         ua = request.headers.get("User-Agent")
 
     session = UserSession(
@@ -266,6 +271,10 @@ async def _record_failed_attempt(db: AsyncSession, user: User) -> None:
             user_id=str(user.id),
             attempts=user.failed_login_attempts,
         )
+    # The caller raises InvalidCredentialsError right after this, and get_db() rolls the
+    # session back on any exception — without an explicit commit the counter was never
+    # persisted and the lockout could not trigger.
+    await db.commit()
 
 
 async def _revoke_all_sessions(db: AsyncSession, user_id: uuid.UUID) -> int:
